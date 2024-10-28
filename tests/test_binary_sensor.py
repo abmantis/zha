@@ -13,7 +13,6 @@ from tests.common import (
     SIG_EP_PROFILE,
     SIG_EP_TYPE,
     create_mock_zigpy_device,
-    find_entity,
     get_entity,
     join_zigpy_device,
     send_attributes_report,
@@ -22,7 +21,16 @@ from tests.common import (
 from zha.application import Platform
 from zha.application.gateway import Gateway
 from zha.application.platforms import PlatformEntity
-from zha.application.platforms.binary_sensor import Accelerometer, IASZone, Occupancy
+from zha.application.platforms.binary_sensor import (
+    Accelerometer,
+    BinarySensor,
+    IASZone,
+    IASZoneBatteryLow,
+    IASZoneTamper,
+    IASZoneTestMode,
+    IASZoneTrouble,
+    Occupancy,
+)
 from zha.zigbee.cluster_handlers.const import SMARTTHINGS_ACCELERATION_CLUSTER
 
 DEVICE_IAS = {
@@ -63,6 +71,19 @@ DEVICE_SMARTTHINGS_MULTI = {
 }
 
 
+def get_binary_sensor_entity(device: dict, entity_type: type[BinarySensor]):
+    """Assert that a binary sensor entity is valid."""
+    entity: PlatformEntity = get_entity(
+        device, Platform.BINARY_SENSOR, entity_type=entity_type
+    )
+
+    assert entity is not None
+    assert isinstance(entity, entity_type)
+    assert entity.PLATFORM == Platform.BINARY_SENSOR
+
+    return entity
+
+
 async def async_test_binary_sensor_occupancy(
     zha_gateway: Gateway,
     cluster: general.OnOff,
@@ -92,52 +113,9 @@ async def async_test_binary_sensor_occupancy(
     assert entity.is_on
 
 
-async def async_test_iaszone_on_off(
-    zha_gateway: Gateway,
-    cluster: security.IasZone,
-    entity: IASZone,
-    plugs: dict[str, int],
-) -> None:
-    """Test getting on and off messages for iaszone binary sensors."""
-    # binary sensor on
-    cluster.listener_event("cluster_command", 1, 0, [1])
-    await zha_gateway.async_block_till_done()
-    assert entity.is_on
-
-    # binary sensor off
-    cluster.listener_event("cluster_command", 1, 0, [0])
-    await zha_gateway.async_block_till_done()
-    assert entity.is_on is False
-
-    # check that binary sensor remains off when non-alarm bits change
-    cluster.listener_event("cluster_command", 1, 0, [0b1111111100])
-    await zha_gateway.async_block_till_done()
-    assert entity.is_on is False
-
-    # test refresh
-    cluster.read_attributes.reset_mock()
-    assert entity.is_on is False
-    cluster.PLUGGED_ATTR_READS = plugs
-    update_attribute_cache(cluster)
-    await entity.async_update()
-    await zha_gateway.async_block_till_done()
-    assert cluster.read_attributes.await_count == 1
-    assert cluster.read_attributes.await_args == call(
-        ["zone_status"], allow_cache=False, only_cache=False, manufacturer=None
-    )
-    assert entity.is_on
-
-
 @pytest.mark.parametrize(
     "device, on_off_test, cluster_name, entity_type, plugs",
     [
-        (
-            DEVICE_IAS,
-            async_test_iaszone_on_off,
-            "ias_zone",
-            IASZone,
-            {"zone_status": 1},
-        ),
         (
             DEVICE_OCCUPANCY,
             async_test_binary_sensor_occupancy,
@@ -159,15 +137,136 @@ async def test_binary_sensor(
     zigpy_device = create_mock_zigpy_device(zha_gateway, device)
     zha_device = await join_zigpy_device(zha_gateway, zigpy_device)
 
-    entity: PlatformEntity = find_entity(zha_device, Platform.BINARY_SENSOR)
-    assert entity is not None
-    assert isinstance(entity, entity_type)
-    assert entity.PLATFORM == Platform.BINARY_SENSOR
+    entity: PlatformEntity = get_binary_sensor_entity(zha_device, entity_type)
     assert entity.is_on is False
 
     # test getting messages that trigger and reset the sensors
     cluster = getattr(zigpy_device.endpoints[1], cluster_name)
     await on_off_test(zha_gateway, cluster, entity, plugs)
+
+
+async def test_iaszone_entities(
+    zha_gateway: Gateway,
+) -> None:
+    """Test multiple entities from IASZone."""
+    zigpy_device = create_mock_zigpy_device(zha_gateway, DEVICE_IAS)
+    zha_device = await join_zigpy_device(zha_gateway, zigpy_device)
+
+    alarm_entity: PlatformEntity = get_binary_sensor_entity(
+        zha_device, entity_type=IASZone
+    )
+    tamper_entity: PlatformEntity = get_binary_sensor_entity(
+        zha_device, entity_type=IASZoneTamper
+    )
+    batterylow_entity: PlatformEntity = get_binary_sensor_entity(
+        zha_device, entity_type=IASZoneBatteryLow
+    )
+    trouble_entity: PlatformEntity = get_binary_sensor_entity(
+        zha_device, entity_type=IASZoneTrouble
+    )
+    testmode_entity: PlatformEntity = get_binary_sensor_entity(
+        zha_device, entity_type=IASZoneTestMode
+    )
+    assert alarm_entity.is_on is False
+    assert tamper_entity.is_on is False
+    assert batterylow_entity.is_on is False
+    assert trouble_entity.is_on is False
+    assert testmode_entity.is_on is False
+
+    cluster = getattr(zigpy_device.endpoints[1], "ias_zone")
+
+    # alarm sensor on from bit 0
+    cluster.listener_event("cluster_command", 1, 0, [0b0000000001])
+    await zha_gateway.async_block_till_done()
+    assert alarm_entity.is_on
+    assert tamper_entity.is_on is False
+    assert batterylow_entity.is_on is False
+    assert trouble_entity.is_on is False
+    assert testmode_entity.is_on is False
+
+    # alarm sensor on from bit 1
+    cluster.listener_event("cluster_command", 1, 0, [0b0000000010])
+    await zha_gateway.async_block_till_done()
+    assert alarm_entity.is_on
+    assert tamper_entity.is_on is False
+    assert batterylow_entity.is_on is False
+    assert trouble_entity.is_on is False
+    assert testmode_entity.is_on is False
+
+    # tamper bit
+    cluster.listener_event("cluster_command", 1, 0, [0b0000000100])
+    await zha_gateway.async_block_till_done()
+    assert alarm_entity.is_on is False
+    assert tamper_entity.is_on
+    assert batterylow_entity.is_on is False
+    assert trouble_entity.is_on is False
+    assert testmode_entity.is_on is False
+
+    # battery bit
+    cluster.listener_event("cluster_command", 1, 0, [0b0000001000])
+    await zha_gateway.async_block_till_done()
+    assert alarm_entity.is_on is False
+    assert tamper_entity.is_on is False
+    assert batterylow_entity.is_on
+    assert trouble_entity.is_on is False
+    assert testmode_entity.is_on is False
+
+    # battery defect bit
+    cluster.listener_event("cluster_command", 1, 0, [0b1000000000])
+    await zha_gateway.async_block_till_done()
+    assert alarm_entity.is_on is False
+    assert tamper_entity.is_on is False
+    assert batterylow_entity.is_on
+    assert trouble_entity.is_on is False
+    assert testmode_entity.is_on is False
+
+    # trouble bit
+    cluster.listener_event("cluster_command", 1, 0, [0b0001000000])
+    await zha_gateway.async_block_till_done()
+    assert alarm_entity.is_on is False
+    assert tamper_entity.is_on is False
+    assert batterylow_entity.is_on is False
+    assert trouble_entity.is_on
+    assert testmode_entity.is_on is False
+
+    # test mode bit
+    cluster.listener_event("cluster_command", 1, 0, [0b0100000000])
+    await zha_gateway.async_block_till_done()
+    assert alarm_entity.is_on is False
+    assert tamper_entity.is_on is False
+    assert batterylow_entity.is_on is False
+    assert trouble_entity.is_on is False
+    assert testmode_entity.is_on
+
+    # all sensors off
+    cluster.listener_event("cluster_command", 1, 0, [0b0000000000])
+    await zha_gateway.async_block_till_done()
+    assert alarm_entity.is_on is False
+    assert tamper_entity.is_on is False
+    assert batterylow_entity.is_on is False
+    assert trouble_entity.is_on is False
+    assert testmode_entity.is_on is False
+
+    # test refresh
+    cluster.read_attributes.reset_mock()
+    assert alarm_entity.is_on is False
+    assert tamper_entity.is_on is False
+    assert batterylow_entity.is_on is False
+    assert trouble_entity.is_on is False
+    assert testmode_entity.is_on is False
+    cluster.PLUGGED_ATTR_READS = {"zone_status": 0b1111111111}
+    update_attribute_cache(cluster)
+    await alarm_entity.async_update()
+    await zha_gateway.async_block_till_done()
+    assert cluster.read_attributes.await_count == 1
+    assert cluster.read_attributes.await_args == call(
+        ["zone_status"], allow_cache=False, only_cache=False, manufacturer=None
+    )
+    assert alarm_entity.is_on
+    assert tamper_entity.is_on
+    assert batterylow_entity.is_on
+    assert trouble_entity.is_on
+    assert testmode_entity.is_on
 
 
 async def test_smarttthings_multi(
@@ -179,12 +278,9 @@ async def test_smarttthings_multi(
     )
     zha_device = await join_zigpy_device(zha_gateway, zigpy_device)
 
-    entity: PlatformEntity = get_entity(
-        zha_device, Platform.BINARY_SENSOR, entity_type=Accelerometer
+    entity: PlatformEntity = get_binary_sensor_entity(
+        zha_device, entity_type=Accelerometer
     )
-    assert entity is not None
-    assert isinstance(entity, Accelerometer)
-    assert entity.PLATFORM == Platform.BINARY_SENSOR
     assert entity.is_on is False
 
     st_ch = zha_device.endpoints[1].all_cluster_handlers["1:0xfc02"]
