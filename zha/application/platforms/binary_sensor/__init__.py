@@ -279,7 +279,7 @@ class IASZoneBatteryLow(IASZoneBinarySensor):
 
 @MULTI_MATCH(cluster_handler_names=CLUSTER_HANDLER_ZONE)
 class IASZoneTrouble(IASZoneBinarySensor):
-    """ZHA IAS Test Mode BinarySensor."""
+    """ZHA IAS Trouble BinarySensor."""
 
     _attribute_name = "zone_status"
     _unique_id_suffix = "trouble"
