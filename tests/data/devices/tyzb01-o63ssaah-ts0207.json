@@ -231,6 +231,198 @@
           "available": true,
           "state": false
         }
+      },
+      {
+        "info_object": {
+          "fallback_name": null,
+          "unique_id": "ec:1b:bd:ff:fe:87:d5:3e-1-1280-tamper",
+          "platform": "binary_sensor",
+          "class_name": "IASZoneTamper",
+          "translation_key": null,
+          "device_class": "tamper",
+          "state_class": null,
+          "entity_category": "diagnostic",
+          "entity_registry_enabled_default": false,
+          "cluster_handlers": [
+            {
+              "class_name": "IASZoneClusterHandler",
+              "generic_id": "cluster_handler_0x0500",
+              "endpoint_id": 1,
+              "cluster": {
+                "id": 1280,
+                "name": "IAS Zone",
+                "type": "server"
+              },
+              "id": "1:0x0500",
+              "unique_id": "ec:1b:bd:ff:fe:87:d5:3e:1:0x0500",
+              "status": "CREATED",
+              "value_attribute": null
+            }
+          ],
+          "device_ieee": [
+            144,
+            64,
+            91,
+            7,
+            0,
+            141,
+            21,
+            0
+          ],
+          "endpoint_id": 1,
+          "available": false,
+          "group_id": null,
+          "attribute_name": "zone_status"
+        },
+        "state": {
+          "class_name": "IASZoneTamper",
+          "available": false,
+          "state": null
+        }
+      },
+      {
+        "info_object": {
+          "fallback_name": null,
+          "unique_id": "ec:1b:bd:ff:fe:87:d5:3e-1-1280-battery_low",
+          "platform": "binary_sensor",
+          "class_name": "IASZoneBatteryLow",
+          "translation_key": null,
+          "device_class": "battery",
+          "state_class": null,
+          "entity_category": "diagnostic",
+          "entity_registry_enabled_default": false,
+          "cluster_handlers": [
+            {
+              "class_name": "IASZoneClusterHandler",
+              "generic_id": "cluster_handler_0x0500",
+              "endpoint_id": 1,
+              "cluster": {
+                "id": 1280,
+                "name": "IAS Zone",
+                "type": "server"
+              },
+              "id": "1:0x0500",
+              "unique_id": "ec:1b:bd:ff:fe:87:d5:3e:1:0x0500",
+              "status": "CREATED",
+              "value_attribute": null
+            }
+          ],
+          "device_ieee": [
+            144,
+            64,
+            91,
+            7,
+            0,
+            141,
+            21,
+            0
+          ],
+          "endpoint_id": 1,
+          "available": false,
+          "group_id": null,
+          "attribute_name": "zone_status"
+        },
+        "state": {
+          "class_name": "IASZoneBatteryLow",
+          "available": false,
+          "state": null
+        }
+      },
+      {
+        "info_object": {
+          "fallback_name": null,
+          "unique_id": "ec:1b:bd:ff:fe:87:d5:3e-1-1280-trouble",
+          "platform": "binary_sensor",
+          "class_name": "IASZoneTrouble",
+          "translation_key": null,
+          "device_class": "problem",
+          "state_class": null,
+          "entity_category": "diagnostic",
+          "entity_registry_enabled_default": false,
+          "cluster_handlers": [
+            {
+              "class_name": "IASZoneClusterHandler",
+              "generic_id": "cluster_handler_0x0500",
+              "endpoint_id": 1,
+              "cluster": {
+                "id": 1280,
+                "name": "IAS Zone",
+                "type": "server"
+              },
+              "id": "1:0x0500",
+              "unique_id": "ec:1b:bd:ff:fe:87:d5:3e:1:0x0500",
+              "status": "CREATED",
+              "value_attribute": null
+            }
+          ],
+          "device_ieee": [
+            144,
+            64,
+            91,
+            7,
+            0,
+            141,
+            21,
+            0
+          ],
+          "endpoint_id": 1,
+          "available": false,
+          "group_id": null,
+          "attribute_name": "zone_status"
+        },
+        "state": {
+          "class_name": "IASZoneTrouble",
+          "available": false,
+          "state": null
+        }
+      },
+      {
+        "info_object": {
+          "fallback_name": null,
+          "unique_id": "ec:1b:bd:ff:fe:87:d5:3e-1-1280-test_mode",
+          "platform": "binary_sensor",
+          "class_name": "IASZoneTestMode",
+          "translation_key": "test_mode",
+          "device_class": null,
+          "state_class": null,
+          "entity_category": "diagnostic",
+          "entity_registry_enabled_default": false,
+          "cluster_handlers": [
+            {
+              "class_name": "IASZoneClusterHandler",
+              "generic_id": "cluster_handler_0x0500",
+              "endpoint_id": 1,
+              "cluster": {
+                "id": 1280,
+                "name": "IAS Zone",
+                "type": "server"
+              },
+              "id": "1:0x0500",
+              "unique_id": "ec:1b:bd:ff:fe:87:d5:3e:1:0x0500",
+              "status": "CREATED",
+              "value_attribute": null
+            }
+          ],
+          "device_ieee": [
+            144,
+            64,
+            91,
+            7,
+            0,
+            141,
+            21,
+            0
+          ],
+          "endpoint_id": 1,
+          "available": false,
+          "group_id": null,
+          "attribute_name": "zone_status"
+        },
+        "state": {
+          "class_name": "IASZoneTestMode",
+          "available": false,
+          "state": null
+        }
       }
     ],
     "button": [
