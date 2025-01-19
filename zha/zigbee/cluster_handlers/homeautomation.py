@@ -66,6 +66,36 @@ class ElectricalMeasurementClusterHandler(ClusterHandler):
             config=REPORT_CONFIG_OP,
         ),
         AttrReportConfig(
+            attr=ElectricalMeasurement.AttributeDefs.apparent_power.name,
+            config=REPORT_CONFIG_OP,
+        ),
+        AttrReportConfig(
+            attr=ElectricalMeasurement.AttributeDefs.rms_current.name,
+            config=REPORT_CONFIG_OP,
+        ),
+        AttrReportConfig(
+            attr=ElectricalMeasurement.AttributeDefs.rms_current_ph_b.name,
+            config=REPORT_CONFIG_OP,
+        ),
+        AttrReportConfig(
+            attr=ElectricalMeasurement.AttributeDefs.rms_current_ph_c.name,
+            config=REPORT_CONFIG_OP,
+        ),
+        AttrReportConfig(
+            attr=ElectricalMeasurement.AttributeDefs.rms_voltage.name,
+            config=REPORT_CONFIG_OP,
+        ),
+        AttrReportConfig(
+            attr=ElectricalMeasurement.AttributeDefs.ac_frequency.name,
+            config=REPORT_CONFIG_OP,
+        ),
+    )
+    ZCL_POLLING_ATTRS = (
+        AttrReportConfig(
+            attr=ElectricalMeasurement.AttributeDefs.active_power.name,
+            config=REPORT_CONFIG_OP,
+        ),
+        AttrReportConfig(
             attr=ElectricalMeasurement.AttributeDefs.active_power_max.name,
             config=REPORT_CONFIG_DEFAULT,
         ),
@@ -136,7 +166,7 @@ class ElectricalMeasurementClusterHandler(ClusterHandler):
         # This is a polling cluster handler. Don't allow cache.
         attrs = [
             a["attr"]
-            for a in self.REPORT_CONFIG
+            for a in self.ZCL_POLLING_ATTRS
             if a["attr"] not in self.cluster.unsupported_attributes
         ]
         result = await self.get_attributes(attrs, from_cache=False, only_cache=False)
